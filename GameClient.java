@@ -16,6 +16,7 @@ import javafx.scene.text.*;
 import javafx.geometry.*;
 import javafx.scene.input.*;
 import javafx.scene.control.*;
+import javafx.beans.property.*;
 
 import java.io.*;
 import java.net.*;
@@ -24,19 +25,19 @@ import java.util.*;
 public class GameClient extends Application{
     String userName = "";
     ObjectOutputStream toServer;
+    Text word;
     public void start(Stage primaryStage){
         Pane gamePane = new Pane();
         BorderPane frame = new BorderPane();
         BorderPane answerFrame = new BorderPane();
+        word = new Text(140,180,"Waiting for next round");
 
-        //Rectangle correctButton = new Rectangle(400,75);
         Button correctButton = new Button("Correct");
         correctButton.setMinSize(400,75);
-        //correctButton.setFill(Color.BLUE);
         Text hintField = new Text(50,50,"You suck");
 
 
-        gamePane.getChildren().add(hintField);
+        gamePane.getChildren().add(word);
         answerFrame.setBottom(correctButton);
         answerFrame.setTop(hintField);
         answerFrame.setAlignment(hintField,Pos.BOTTOM_CENTER);
@@ -49,17 +50,25 @@ public class GameClient extends Application{
         primaryStage.setTitle("");
         primaryStage.show();
 
+
+
         try{
             System.out.println("Client Started...");
-            Socket socket = new Socket("localHost", 8000);
+            Socket socket = new Socket("localhost", 8000);
             System.out.println("Waiting...");
             System.out.println("Server Accepted...");
-            System.out.println("Start sending messages!");
-            Runnable task = new HandleClient(socket);
+            System.out.println("Let the games begin!");
+            Runnable task = new HandleClient(socket, word);
             Thread thread = new Thread(task);
             thread.start();
             toServer = new ObjectOutputStream(socket.getOutputStream());
         }catch(Exception e){}
+
+        correctButton.setOnMouseClicked(e -> {
+            try {
+                toServer.writeInt(1);
+            }catch (Exception e2){}
+        });
     }
     public static void main(String[] args){
         launch(args);
@@ -68,21 +77,18 @@ public class GameClient extends Application{
 }//end class
 class HandleClient implements Runnable{
     private Socket socket;
+    Text word;
 
-    HandleClient(Socket socket){
+    HandleClient(Socket socket, Text word){
         this.socket = socket;
+        this.word = word;
     }//constructor
 
     public void run(){
         try{
             ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
             while(true){
-                //String message = (String)fromClient.readObject();
-
-
-
-
-
+                word = (Text)fromClient.readObject();
             }//while
         }catch(Exception e){
             System.out.println(e);
